@@ -4,12 +4,23 @@ def agent(results: dict):
     rag_flag, _ = results["RAG"]
     reasoning_flag, _ = results["Reasoning"]
 
-    # 🔥 Case 1: Strong malicious signal
-    if reasoning_flag or rag_flag:
-        return True, "Blocked by high-confidence agents (RAG/Reasoning)"
+    score = 0
 
-    # ⚠️ Case 2: Only shallow agents triggered
-    if regex_flag or rule_flag:
-        return False, "Allowed: likely false positive (only Regex/Rule triggered)"
+    if regex_flag:
+        score += 2
+    if rule_flag:
+        score += 2
+    if rag_flag:
+        score += 3
+    if reasoning_flag:
+        score += 4
+
+    # 🔥 Strong block
+    if score >= 5:
+        return True, f"Blocked (score={score})"
+
+    # ⚠️ Medium suspicion
+    if score >= 3:
+        return False, f"Allowed with caution (score={score})"
 
     return False, "All agents passed"

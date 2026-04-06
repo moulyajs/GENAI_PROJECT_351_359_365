@@ -8,10 +8,9 @@ from app.agents.reasoning_agent import agent as reasoning_agent
 from app.agents.meta_agent import agent as meta_agent
 
 from app.output.output_handler import display
-
+from app.llm.response_generator import generate_response  # ✅ NEW
 
 rag = RAGAgent()
-
 
 def run_pipeline(user_prompt):
     # Step 1: Input
@@ -36,12 +35,21 @@ def run_pipeline(user_prompt):
     # Step 4: Meta decision
     final_decision, meta_reason = meta_agent(agent_results)
 
-    return final_decision, meta_reason, agent_results
+    # ✅ Step 5: Response Generation (NEW)
+    if final_decision:  # BLOCK
+        answer = "🚫 Request blocked due to security concerns."
+    else:
+        answer = generate_response(clean_prompt)
+
+    return final_decision, meta_reason, agent_results, answer
 
 
 if __name__ == "__main__":
     prompt = input("Enter prompt: ")
 
-    final_decision, meta_reason, agent_results = run_pipeline(prompt)
+    final_decision, meta_reason, agent_results, answer = run_pipeline(prompt)
 
     display(final_decision, meta_reason, agent_results)
+
+    print("\n--- LLM Response ---")
+    print(answer)
