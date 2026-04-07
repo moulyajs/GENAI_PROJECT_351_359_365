@@ -10,7 +10,13 @@ from app.agents.meta_agent import agent as meta_agent
 from app.output.output_handler import display
 from app.llm.response_generator import generate_response  # ✅ NEW
 
-rag = RAGAgent()
+_rag = None
+
+def _get_rag_agent():
+    global _rag
+    if _rag is None:
+        _rag = RAGAgent()
+    return _rag
 
 def run_pipeline(user_prompt):
     # Step 1: Input
@@ -19,7 +25,16 @@ def run_pipeline(user_prompt):
     # Step 2: Preprocessing
     clean_prompt = clean_text(data["prompt"])
 
+    # Step 2.5: If image input but no text found, block immediately with specific reasoning and response
+    if data.get("mode") == "image" and not clean_prompt:
+        final_decision = False
+        meta_reason = "No text was extracted from the image."
+        agent_results = {}
+        answer = "No text was extracted from the image. Please provide an image containing visible text, hidden text, or metadata text."
+        return final_decision, meta_reason, agent_results, answer
+
     # Step 3: Agents
+    rag = _get_rag_agent()
     regex_result = regex_agent(clean_prompt)
     rule_result = rule_agent(clean_prompt)
     rag_result = rag.evaluate_prompt(clean_prompt)
