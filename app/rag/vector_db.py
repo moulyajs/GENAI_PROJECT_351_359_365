@@ -47,19 +47,36 @@ class VectorDB:
         if self.safe_prompts and isinstance(self.safe_prompts[0], dict):
             self.safe_prompts = [item.get('prompt', item.get('text', '')) for item in self.safe_prompts]
 
-    # Build index
-    def build_index(self, embedding_func: Callable[[List[str]], np.ndarray]) -> None:
+    # Build index with caching
+    def build_index(self, embedding_func: Callable[[List[str]], np.ndarray], cache_dir: str = "app/rag/dataset") -> None:
         if not self.malicious_prompts and not self.safe_prompts:
             logger.warning("Empty datasets. Cannot build vector index.")
             return
 
-        logger.info("Computing embeddings for malicious prompts...")
-        if self.malicious_prompts:
-            self.malicious_embeddings = embedding_func(self.malicious_prompts)
+        import os
+        os.makedirs(cache_dir, exist_ok=True)
+        mal_cache_path = os.path.join(cache_dir, "malicious_embeddings.npy")
+        saf_cache_path = os.path.join(cache_dir, "safe_embeddings.npy")
+
+        # Try loading malicious cache
+        if os.path.exists(mal_cache_path):
+            logger.info("Loading malicious embeddings from cache...")
+            self.malicious_embeddings = np.load(mal_cache_path)
+        else:
+            logger.info("Computing embeddings for malicious prompts...")
+            if self.malicious_prompts:
+                self.malicious_embeddings = embedding_func(self.malicious_prompts)
+                np.save(mal_cache_path, self.malicious_embeddings)
         
-        logger.info("Computing embeddings for safe prompts...")
-        if self.safe_prompts:
-            self.safe_embeddings = embedding_func(self.safe_prompts)
+        # Try loading safe cache
+        if os.path.exists(saf_cache_path):
+            logger.info("Loading safe embeddings from cache...")
+            self.safe_embeddings = np.load(saf_cache_path)
+        else:
+            logger.info("Computing embeddings for safe prompts...")
+            if self.safe_prompts:
+                self.safe_embeddings = embedding_func(self.safe_prompts)
+                np.save(saf_cache_path, self.safe_embeddings)
         
         self.is_initialized = True
         logger.info("Vector index built successfully.")
