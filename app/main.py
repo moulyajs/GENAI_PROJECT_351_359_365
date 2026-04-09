@@ -25,13 +25,14 @@ def run_pipeline(user_prompt):
     # Step 2: Preprocessing
     clean_prompt = clean_text(data["prompt"])
 
-    # Step 2.5: If image input but no text found, block immediately with specific reasoning and response
+    # Step 2.5: Image case
     if data.get("mode") == "image" and not clean_prompt:
         final_decision = False
         meta_reason = "No text was extracted from the image."
         agent_results = {}
-        answer = "No text was extracted from the image. Please provide an image containing visible text, hidden text, or metadata text."
-        return final_decision, meta_reason, agent_results, answer
+        contributors = []
+        answer = "No text was extracted from the image. Please provide an image containing visible text."
+        return final_decision, meta_reason, agent_results, contributors, answer
 
     # Step 3: Agents
     rag = _get_rag_agent()
@@ -48,23 +49,12 @@ def run_pipeline(user_prompt):
     }
 
     # Step 4: Meta decision
-    final_decision, meta_reason = meta_agent(agent_results)
+    final_decision, meta_reason, contributors = meta_agent(agent_results)
 
-    # ✅ Step 5: Response Generation (NEW)
-    if final_decision:  # BLOCK
+    # Step 5: Response generation
+    if final_decision:
         answer = "🚫 Request blocked due to security concerns."
     else:
         answer = generate_response(clean_prompt)
 
-    return final_decision, meta_reason, agent_results, answer
-
-
-if __name__ == "__main__":
-    prompt = input("Enter prompt: ")
-
-    final_decision, meta_reason, agent_results, answer = run_pipeline(prompt)
-
-    display(final_decision, meta_reason, agent_results)
-
-    print("\n--- LLM Response ---")
-    print(answer)
+    return final_decision, meta_reason, agent_results, contributors, answer

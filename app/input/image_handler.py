@@ -4,48 +4,71 @@ from typing import Dict, Optional
 
 import cv2
 import numpy as np
-import pytesseract # type: ignore
-import piexif # type: ignore
 from PIL import Image
 from stegano import lsb  # type: ignore
+import piexif  # type: ignore
+
+# ✅ NEW: EasyOCR
+import easyocr
+
+# Initialize once (IMPORTANT)
+reader = easyocr.Reader(['en'])
 
 IMAGE_EXTENSIONS = {".png", ".jpg", ".jpeg", ".bmp", ".gif", ".tiff", ".tif"}
 
-def _configure_tesseract() -> None:
-    if os.name == "nt":
-        pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
-    elif os.name == "posix":
-        if os.path.exists("/usr/bin/tesseract"):
-            pytesseract.pytesseract.tesseract_cmd = "/usr/bin/tesseract"
-        elif os.path.exists("/usr/local/bin/tesseract"):
-            pytesseract.pytesseract.tesseract_cmd = "/usr/local/bin/tesseract"
 
-def preprocess_image_pil(pil_img: Image.Image) -> Image.Image:
+# -------------------------------
+# 🔍 IMAGE PREPROCESSING
+# -------------------------------
+def preprocess_image_pil(pil_img: Image.Image) -> np.ndarray:
     img = np.array(pil_img)
     img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
 
+    # Improve contrast
     img = cv2.convertScaleAbs(img, alpha=1.5, beta=0)
+
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
     thresh = cv2.adaptiveThreshold(
-        gray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 11, 2
+        gray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
+        cv2.THRESH_BINARY, 11, 2
     )
 
     kernel = np.ones((1, 1), np.uint8)
     cleaned = cv2.morphologyEx(thresh, cv2.MORPH_OPEN, kernel)
 
-    return Image.fromarray(cleaned)
+    return cleaned
 
-def extract_ocr_text(pil_image: Image.Image, lang: str = "eng") -> str:
+
+# -------------------------------
+# 🔍 OCR USING EASYOCR
+# -------------------------------
+def extract_ocr_text(pil_image: Image.Image) -> str:
     try:
-        _configure_tesseract()
-        processed_image = preprocess_image_pil(pil_image)
-        extracted_text = pytesseract.image_to_string(processed_image, lang=lang).strip()
-        return extracted_text if extracted_text else ""
+        processed_img = preprocess_image_pil(pil_image)
+
+        result = reader.readtext(processed_img)
+
+        extracted_text = []
+
+        for detection in result:
+            text = detection[1]
+            confidence = detection[2]
+
+            # Optional filter
+            if confidence > 0.5:
+                extracted_text.append(text)
+
+        return " ".join(extracted_text).strip()
+
     except Exception as e:
-        print(f"[OCR Extraction Error] {e}")
+        print(f"[OCR Extraction Error - EasyOCR] {e}")
         return ""
 
+
+# -------------------------------
+# 🔍 HIDDEN TEXT (STEGO)
+# -------------------------------
 def extract_hidden_text(image_file_name: str, pil_image: Image.Image) -> str:
     ext = os.path.splitext(image_file_name)[1].lower()
     if ext != ".png":
@@ -64,10 +87,15 @@ def extract_hidden_text(image_file_name: str, pil_image: Image.Image) -> str:
             pass
 
         return hidden if hidden else ""
+
     except Exception as e:
         print(f"[HiddenText Extraction Error] {e}")
         return ""
 
+
+# -------------------------------
+# 🔍 METADATA EXTRACTION
+# -------------------------------
 def extract_metadata(image_file_name: str, pil_image: Image.Image) -> str:
     ext = os.path.splitext(image_file_name)[1].lower()
 
@@ -85,16 +113,22 @@ def extract_metadata(image_file_name: str, pil_image: Image.Image) -> str:
         try:
             exif_data = piexif.load(image_file_name)
             desc_bytes = exif_data["0th"].get(piexif.ImageIFD.ImageDescription, b"")
+
             if not desc_bytes:
                 return ""
-            desc = desc_bytes.decode("utf-8", errors="ignore").strip()
-            return desc
+
+            return desc_bytes.decode("utf-8", errors="ignore").strip()
+
         except Exception as e:
             print(f"[JPEG Metadata Error] {e}")
             return ""
 
     return ""
 
+
+# -------------------------------
+# 🔍 MAIN PIPELINE
+# -------------------------------
 def run_all_retrievals(image_file_name: str, pil_image: Image.Image) -> Optional[Dict]:
     results = {
         "ocr_text": "",
@@ -122,20 +156,28 @@ def run_all_retrievals(image_file_name: str, pil_image: Image.Image) -> Optional
 
         if results["has_text"]:
             all_texts = []
+
             if results["metadata_text"]:
                 all_texts.append(results["metadata_text"])
+
             if results["hidden_text"]:
                 all_texts.append(results["hidden_text"])
+
             if results["ocr_text"]:
                 all_texts.append(results["ocr_text"])
 
             results["prompt_found"] = " ".join(all_texts)
 
         return results
+
     except Exception as e:
         print(f"[Error in run_all_retrievals] {e}")
         return None
 
+
+# -------------------------------
+# 🔍 ENTRY FUNCTION
+# -------------------------------
 def extract_text_from_image_path(image_file_name: str) -> Optional[Dict]:
     if not os.path.isfile(image_file_name):
         print(f"[ImageHandler] File not found: {image_file_name}")
@@ -145,6 +187,7 @@ def extract_text_from_image_path(image_file_name: str) -> Optional[Dict]:
         with Image.open(image_file_name) as pil_image:
             pil_image = pil_image.convert("RGB")
             return run_all_retrievals(image_file_name, pil_image)
+
     except Exception as e:
-        print(f"[ImageHandler] Failed to open image {image_file_name}: {e}")
+        print(f"[ImageHandler Error] {e}")
         return None

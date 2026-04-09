@@ -2,7 +2,7 @@ import os
 import sys
 import tempfile
 import warnings
-from app.input.document_handler import extract_text_from_document
+
 # Suppress transformers and torchvision warnings during Streamlit startup
 warnings.filterwarnings("ignore", category=UserWarning)
 warnings.filterwarnings("ignore", module="transformers.*")
@@ -11,7 +11,7 @@ warnings.filterwarnings("ignore", message=".*torchvision.*")
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if ROOT_DIR not in sys.path:
     sys.path.insert(0, ROOT_DIR)
-
+from app.input.document_handler import extract_text_from_document
 import streamlit as st # type: ignore
 from app.input.image_handler import extract_text_from_image_path
 from app.main import run_pipeline
@@ -24,13 +24,31 @@ def initialize_pipeline():
     st.success("Pipeline ready!")
     return True
 
-def display_output(final_decision, meta_reason, answer):
+def display_output(final_decision, meta_reason, answer, agent_results, contributors=None):
     st.subheader("Output")
     st.markdown("---")
+
     st.write("**Final Answer:**")
     st.write(answer or "N/A")
+
     st.write("**Block Status:**", final_decision)
     st.write("**Reason:**", meta_reason)
+
+    # 🔥 NEW: Show all agent decisions
+    st.markdown("### 🧠 Agent Decisions")
+
+    for agent, (flag, reason) in agent_results.items():
+        status = "🚫 BLOCK" if flag else "✅ ALLOW"
+        st.write(f"**{agent}:** {status} | {reason}")
+
+    # 🔥 Contributors (who influenced decision)
+    if contributors:
+        st.markdown("### 🔍 Contributing Agents")
+        for agent, reason in contributors:
+            st.write(f"**{agent}:** {reason}")
+    else:
+        st.markdown("### 🔍 Contributing Agents")
+        st.write("None")
 
 def handle_text_input():
     st.header("Text Input")
@@ -46,20 +64,20 @@ def handle_text_input():
 
     with st.spinner("Processing input and agents..."):
         try:
-            final_decision, meta_reason, agent_results, answer = run_pipeline(prompt)
+            final_decision, meta_reason, agent_results,contributors, answer = run_pipeline(prompt)
         except Exception as exc:
             st.error(f"Pipeline error: {exc}")
             return
 
     if final_decision:
         st.error("Blocked")
-        display_output(final_decision, meta_reason, answer)
+        display_output(final_decision, meta_reason, answer,agent_results,contributors)
         return
 
     with st.spinner("Generating response..."):
         pass
 
-    display_output(final_decision, meta_reason, answer)
+    display_output(final_decision, meta_reason, answer,agent_results,contributors)
 
 def handle_image_input():
     st.header("Image Input")
@@ -96,20 +114,20 @@ def handle_image_input():
 
         with st.spinner("Processing input and agents..."):
             try:
-                final_decision, meta_reason, agent_results, answer = run_pipeline(extracted_text)
+                final_decision, meta_reason, agent_results,contributors, answer = run_pipeline(extracted_text)
             except Exception as exc:
                 st.error(f"Pipeline error: {exc}")
                 return
 
         if final_decision:
             st.error("Blocked")
-            display_output(final_decision, meta_reason, answer)
+            display_output(final_decision, meta_reason, answer,agent_results,contributors)
             return
 
         with st.spinner("Generating response..."):
             pass
 
-        display_output(final_decision, meta_reason, answer)
+        display_output(final_decision, meta_reason, answer,agent_results,contributors)
 
     finally:
         try:
@@ -161,17 +179,17 @@ def handle_document_input():
 
         with st.spinner("Running security pipeline..."):
             try:
-                final_decision, meta_reason, agent_results, answer = run_pipeline(extracted_text)
+                final_decision, meta_reason, agent_results,contributors, answer = run_pipeline(extracted_text)
             except Exception as exc:
                 st.error(f"Pipeline error: {exc}")
                 return
 
         if final_decision:
             st.error("Blocked")
-            display_output(final_decision, meta_reason, answer)
+            display_output(final_decision, meta_reason, answer,agent_results,contributors)
             return
 
-        display_output(final_decision, meta_reason, answer)
+        display_output(final_decision, meta_reason, answer,agent_results,contributors)
 
     finally:
         try:

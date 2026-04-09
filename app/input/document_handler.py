@@ -8,6 +8,7 @@ from app.input.preprocessing import clean_text
 DOCUMENT_EXTENSIONS = {".pdf", ".docx", ".txt"}
 
 
+# 🔹 PDF Extraction
 def extract_text_from_pdf(file_path: str) -> str:
     text = ""
     try:
@@ -19,6 +20,7 @@ def extract_text_from_pdf(file_path: str) -> str:
     return text
 
 
+# 🔹 DOCX Extraction
 def extract_text_from_docx(file_path: str) -> str:
     text = ""
     try:
@@ -30,6 +32,7 @@ def extract_text_from_docx(file_path: str) -> str:
     return text
 
 
+# 🔹 TXT Extraction
 def extract_text_from_txt(file_path: str) -> str:
     try:
         with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
@@ -39,29 +42,7 @@ def extract_text_from_txt(file_path: str) -> str:
         return ""
 
 
-def detect_prompt_injection(text: str) -> Optional[str]:
-    """
-    Basic rule-based detection for indirect prompt injection patterns
-    """
-    suspicious_patterns = [
-        "ignore previous instructions",
-        "override system",
-        "act as",
-        "you are now",
-        "execute this",
-        "bypass",
-        "system prompt",
-        "do anything now",
-    ]
-
-    detected = []
-    for pattern in suspicious_patterns:
-        if pattern in text:
-            detected.append(pattern)
-
-    return ", ".join(detected) if detected else None
-
-
+# 🔹 Main Document Handler
 def extract_text_from_document(file_path: str) -> Optional[Dict]:
     if not os.path.isfile(file_path):
         print(f"[DocumentHandler] File not found: {file_path}")
@@ -82,12 +63,9 @@ def extract_text_from_document(file_path: str) -> Optional[Dict]:
 
     cleaned_text = clean_text(raw_text)
 
-    prompt_injection = detect_prompt_injection(cleaned_text)
-
     return {
         "raw_text": raw_text,
         "cleaned_text": cleaned_text,
         "prompt_found": cleaned_text,
-        "injection_detected": prompt_injection,
         "has_text": bool(cleaned_text.strip()),
     }
