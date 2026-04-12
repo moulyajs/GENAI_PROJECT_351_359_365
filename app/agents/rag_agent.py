@@ -20,7 +20,7 @@ class RAGAgent:
                  min_score: float = 0.4,
                  fallback_mal_threshold: float = 0.7,
                  fallback_saf_threshold: float = 0.65,
-                 ollama_timeout: int = 200,
+                 ollama_timeout: int = 300,
                  max_prompt_length: int = 2000):
 
         self.top_k = top_k

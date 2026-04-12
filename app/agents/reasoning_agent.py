@@ -83,7 +83,7 @@ Prompt:
                 "format": "json",
                 "stream": False
             },
-            timeout=120
+            timeout=300
         )
 
         data = response.json()
