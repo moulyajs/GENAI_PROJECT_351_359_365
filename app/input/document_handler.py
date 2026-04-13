@@ -7,8 +7,7 @@ from app.input.preprocessing import clean_text
 
 DOCUMENT_EXTENSIONS = {".pdf", ".docx", ".txt"}
 
-
-# 🔹 PDF Extraction
+# PDF Extraction
 def extract_text_from_pdf(file_path: str) -> str:
     text = ""
     try:
@@ -20,7 +19,7 @@ def extract_text_from_pdf(file_path: str) -> str:
     return text
 
 
-# 🔹 DOCX Extraction
+# DOCX Extraction
 def extract_text_from_docx(file_path: str) -> str:
     text = ""
     try:
@@ -32,7 +31,7 @@ def extract_text_from_docx(file_path: str) -> str:
     return text
 
 
-# 🔹 TXT Extraction
+# TXT Extraction
 def extract_text_from_txt(file_path: str) -> str:
     try:
         with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
@@ -42,7 +41,7 @@ def extract_text_from_txt(file_path: str) -> str:
         return ""
 
 
-# 🔹 Main Document Handler
+# Main Document Handler
 def extract_text_from_document(file_path: str) -> Optional[Dict]:
     if not os.path.isfile(file_path):
         print(f"[DocumentHandler] File not found: {file_path}")

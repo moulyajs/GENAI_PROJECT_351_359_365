@@ -9,7 +9,6 @@ from app.input.document_handler import extract_text_from_document
 IMAGE_EXTENSIONS = {".png", ".jpg", ".jpeg", ".bmp", ".gif", ".tiff", ".tif"}
 DOCUMENT_EXTENSIONS = {".pdf", ".docx", ".txt"}
 
-
 def _is_image_path(value: Any) -> bool:
     return (
         isinstance(value, str)
@@ -17,14 +16,12 @@ def _is_image_path(value: Any) -> bool:
         and os.path.splitext(value)[1].lower() in IMAGE_EXTENSIONS
     )
 
-
 def _is_document_path(value: Any) -> bool:
     return (
         isinstance(value, str)
         and os.path.isfile(value)
         and os.path.splitext(value)[1].lower() in DOCUMENT_EXTENSIONS
     )
-
 
 def handle_input(user_input: Any) -> Dict:
     image_data = None

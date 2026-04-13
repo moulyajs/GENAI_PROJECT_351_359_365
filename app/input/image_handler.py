@@ -7,19 +7,14 @@ import numpy as np
 from PIL import Image
 from stegano import lsb  # type: ignore
 import piexif  # type: ignore
-
-# ✅ NEW: EasyOCR
 import easyocr
 
-# Initialize once (IMPORTANT)
+# Initialize once 
 reader = easyocr.Reader(['en'])
 
 IMAGE_EXTENSIONS = {".png", ".jpg", ".jpeg", ".bmp", ".gif", ".tiff", ".tif"}
 
-
-# -------------------------------
-# 🔍 IMAGE PREPROCESSING
-# -------------------------------
+# Image Preprocessing
 def preprocess_image_pil(pil_img: Image.Image) -> np.ndarray:
     img = np.array(pil_img)
     img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
@@ -40,9 +35,7 @@ def preprocess_image_pil(pil_img: Image.Image) -> np.ndarray:
     return cleaned
 
 
-# -------------------------------
-# 🔍 OCR USING EASYOCR
-# -------------------------------
+# OCR using easyocr
 def extract_ocr_text(pil_image: Image.Image) -> str:
     try:
         processed_img = preprocess_image_pil(pil_image)
@@ -66,9 +59,7 @@ def extract_ocr_text(pil_image: Image.Image) -> str:
         return ""
 
 
-# -------------------------------
-# 🔍 HIDDEN TEXT (STEGO)
-# -------------------------------
+# Hidden text (stego)       
 def extract_hidden_text(image_file_name: str, pil_image: Image.Image) -> str:
     ext = os.path.splitext(image_file_name)[1].lower()
     if ext != ".png":
@@ -93,9 +84,7 @@ def extract_hidden_text(image_file_name: str, pil_image: Image.Image) -> str:
         return ""
 
 
-# -------------------------------
-# 🔍 METADATA EXTRACTION
-# -------------------------------
+# Metadata extraction
 def extract_metadata(image_file_name: str, pil_image: Image.Image) -> str:
     ext = os.path.splitext(image_file_name)[1].lower()
 
@@ -126,9 +115,7 @@ def extract_metadata(image_file_name: str, pil_image: Image.Image) -> str:
     return ""
 
 
-# -------------------------------
-# 🔍 MAIN PIPELINE
-# -------------------------------
+# Main pipeline
 def run_all_retrievals(image_file_name: str, pil_image: Image.Image) -> Optional[Dict]:
     results = {
         "ocr_text": "",
@@ -174,10 +161,7 @@ def run_all_retrievals(image_file_name: str, pil_image: Image.Image) -> Optional
         print(f"[Error in run_all_retrievals] {e}")
         return None
 
-
-# -------------------------------
-# 🔍 ENTRY FUNCTION
-# -------------------------------
+# Get image from the path and run all the retrievals
 def extract_text_from_image_path(image_file_name: str) -> Optional[Dict]:
     if not os.path.isfile(image_file_name):
         print(f"[ImageHandler] File not found: {image_file_name}")

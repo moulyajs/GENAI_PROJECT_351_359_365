@@ -29,14 +29,14 @@ def agent(results: dict):
         score += 4
         contributors.append(("Reasoning", reasoning_reason))
 
-    # 🔥 LAYER 1: Hard override
+    # LAYER 1: Hard override
     if reasoning_flag:
         return True, "Blocked: harmful intent detected", contributors
 
     if rag_flag and "malicious" in rag_reason.lower():
         return True, "Blocked: matched malicious patterns", contributors
 
-    # 🔥 LAYER 2: Score-based
+    # LAYER 2: Score-based
     if score >= 6:
         return True, f"Blocked (score={score})", contributors
 

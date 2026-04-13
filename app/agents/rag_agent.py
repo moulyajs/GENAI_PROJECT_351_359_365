@@ -15,7 +15,8 @@ class RAGAgent:
     def __init__(self, 
                  malicious_path: str = None, 
                  safe_path: str = None, 
-                 ollama_url: str = "http://localhost:11434",
+                 ollama_url: str = "http://localhost:11434", # For local run
+                 # ollama_url = os.environ.get("OLLAMA_HOST", "http://localhost:11434") + "/api/generate" # For docker
                  top_k: int = 2,
                  min_score: float = 0.4,
                  fallback_mal_threshold: float = 0.7,

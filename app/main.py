@@ -8,7 +8,7 @@ from app.agents.reasoning_agent import agent as reasoning_agent
 from app.agents.meta_agent import agent as meta_agent
 
 from app.output.output_handler import display
-from app.llm.response_generator import generate_response  # ✅ NEW
+from app.llm.response_generator import generate_response
 
 _rag = None
 
@@ -53,7 +53,7 @@ def run_pipeline(user_prompt):
 
     # Step 5: Response generation
     if final_decision:
-        answer = "🚫 Request blocked due to security concerns."
+        answer = "Request blocked due to security concerns."
     else:
         answer = generate_response(clean_prompt)
 

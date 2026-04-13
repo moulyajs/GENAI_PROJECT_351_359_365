@@ -11,11 +11,13 @@ warnings.filterwarnings("ignore", message=".*torchvision.*")
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if ROOT_DIR not in sys.path:
     sys.path.insert(0, ROOT_DIR)
+
 from app.input.document_handler import extract_text_from_document
 import streamlit as st # type: ignore
 from app.input.image_handler import extract_text_from_image_path
 from app.main import run_pipeline
 
+# Initialize pipeline
 @st.cache_resource
 def initialize_pipeline():
     with st.spinner("Initializing security pipeline... (this may take a minute on first run)"):
@@ -24,6 +26,7 @@ def initialize_pipeline():
     st.success("Pipeline ready!")
     return True
 
+# Display output
 def display_output(final_decision, meta_reason, answer, agent_results, contributors=None):
     st.subheader("Output")
     st.markdown("---")
@@ -34,22 +37,23 @@ def display_output(final_decision, meta_reason, answer, agent_results, contribut
     st.write("**Block Status:**", final_decision)
     st.write("**Reason:**", meta_reason)
 
-    # 🔥 NEW: Show all agent decisions
-    st.markdown("### 🧠 Agent Decisions")
+    # Show all agent decisions
+    st.markdown("### Agent Decisions")
 
     for agent, (flag, reason) in agent_results.items():
-        status = "🚫 BLOCK" if flag else "✅ ALLOW"
+        status = "BLOCK" if flag else "ALLOW"
         st.write(f"**{agent}:** {status} | {reason}")
 
-    # 🔥 Contributors (who influenced decision)
+    # Contributors (who influenced decision)
     if contributors:
-        st.markdown("### 🔍 Contributing Agents")
+        st.markdown("### Contributing Agents")
         for agent, reason in contributors:
             st.write(f"**{agent}:** {reason}")
     else:
-        st.markdown("### 🔍 Contributing Agents")
+        st.markdown("### Contributing Agents")
         st.write("None")
 
+# Handle text input
 def handle_text_input():
     st.header("Text Input")
     prompt = st.text_area("Enter prompt", height=180)
@@ -79,6 +83,7 @@ def handle_text_input():
 
     display_output(final_decision, meta_reason, answer,agent_results,contributors)
 
+# Handle image input
 def handle_image_input():
     st.header("Image Input")
     uploaded_file = st.file_uploader(
@@ -134,6 +139,8 @@ def handle_image_input():
             os.unlink(temp_path)
         except Exception:
             pass
+
+# Handle document input
 def handle_document_input():
     st.header("Document Input")
 
@@ -197,6 +204,7 @@ def handle_document_input():
         except Exception:
             pass
 
+# Main function
 def main():
     st.set_page_config(page_title="LLM Security Pipeline", layout="centered")
     st.title("LLM Security Pipeline")

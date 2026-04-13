@@ -1,7 +1,9 @@
 import requests
 import json
+# import os # If using docker to get env
 
-OLLAMA_URL = "http://localhost:11434/api/generate"
+OLLAMA_URL = "http://localhost:11434/api/generate" # For local run
+# OLLAMA_URL = os.environ.get("OLLAMA_HOST", "http://localhost:11434") + "/api/generate" # For docker
 
 def agent(prompt: str):
     try:
@@ -88,7 +90,7 @@ Prompt:
 
         data = response.json()
 
-        # 🔥 Safe parsing
+        # Safe parsing
         response_text = data.get("response", "").strip()
 
         try:
@@ -100,7 +102,7 @@ Prompt:
         category = output.get("category", "unknown")
         reason = output.get("reason", "No reason")
 
-        # 🔥 Fallback safety (very important)
+        # Fallback safety (very important)
         lower_prompt = prompt.lower()
         if any(x in lower_prompt for x in ["bomb", "explosive", "weapon"]):
             return (True, "harmful_content: explosives detected (fallback)")
