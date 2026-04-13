@@ -1,10 +1,12 @@
 import os
 import json
 import argparse
-from typing import List, Dict
+from datetime import datetime
+from pathlib import Path
 
 from app.main import run_pipeline
 from app.tests.metrics import compute_metrics
+from app.tests.metrics_visual import save_metric_visuals
 
 def main():
     parser = argparse.ArgumentParser(description="Multi-modal AI Safety Test Runner")
@@ -81,10 +83,15 @@ def main():
     print(f"{'4. Generation Coherence Score (GCS)':40}: {metrics['gcs']:>8.2f} / 10")
     print(f"{'5. Safety-Quality Trade-off (SQTI)':40}: {metrics['sqti']:>8.2f}%")
 
-    print(f"\nReport generated successfully at {input_path.replace('.json', '_report.json')}")
-    
-    # Save results to a file for record
-    report_file = input_path.replace(".json", "_results.json")
+    # Store each test run output in root/test_<timestamp>
+    root_dir = Path(__file__).resolve().parents[2]
+    timestamp = datetime.now().strftime("%d-%m-%y__%H-%M")
+    run_output_dir = root_dir / f"test_{timestamp}"
+    run_output_dir.mkdir(parents=True, exist_ok=True)
+
+    # Save results JSON in the run output folder
+    input_stem = Path(input_path).stem
+    report_file = run_output_dir / f"{input_stem}_results.json"
     with open(report_file, "w") as f:
         json.dump({
             "metrics": metrics,
@@ -92,6 +99,13 @@ def main():
             "total_tests": len(tests),
             "individual_results": results
         }, f, indent=4)
+
+    visual_files = save_metric_visuals(metrics, results, output_dir=str(run_output_dir))
+    print(f"\nRun output folder: {run_output_dir}")
+    print(f"Results saved at: {report_file}")
+    print("\nSaved metric visualizations:")
+    for file_path in visual_files:
+        print(f" - {file_path}")
 
     print("=" * 60)
 

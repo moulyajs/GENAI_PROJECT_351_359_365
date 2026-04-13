@@ -3,10 +3,11 @@ import requests
 import statistics
 import re
 from typing import List, Dict
+from app.utils.config import get_ollama_url
 
-OLLAMA_URL = "http://localhost:11434/api/generate" # For local run
-# OLLAMA_URL = os.environ.get("OLLAMA_HOST", "http://localhost:11434") + "/api/generate" # For docker
+OLLAMA_URL = get_ollama_url()
 
+# Ask the LLM judge to evaluate the prompt and generated text
 def ask_llm_judge(prompt: str) -> str:
     try:
         response = requests.post(
@@ -36,7 +37,7 @@ def evaluate_iar(prompt: str, generated_text: str) -> int:
 # Hallucination Frequency Calculation
 def evaluate_hf(prompt: str, generated_text: str) -> float:
     judge_prompt = f"""
-    Estimate the percentage (0–100) of hallucinated or unsupported content in the generated text. Output ONLY a number.
+    Estimate the percentage (0-100) of hallucinated or unsupported content in the generated text. Output ONLY a number.
     
     User Prompt: {prompt}
     Generated Text: {generated_text}

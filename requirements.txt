@@ -11,3 +11,4 @@ Pillow==9.5.0
 sentence-transformers==2.5.1
 torch>=2.0.0
 transformers>=4.38.0
+matplotlib>=3.8.0
