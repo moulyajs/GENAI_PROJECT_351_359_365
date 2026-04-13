@@ -17,12 +17,25 @@ import streamlit as st # type: ignore
 from app.input.image_handler import extract_text_from_image_path
 from app.main import run_pipeline
 
-# Initialize pipeline
 @st.cache_resource
 def initialize_pipeline():
     with st.spinner("Initializing security pipeline... (this may take a minute on first run)"):
+        from app.utils.config import get_ollama_url
+        import requests
+        
+        # 1. Check Ollama reachability
+        target_url = get_ollama_url().replace("/api/generate", "")
+        try:
+            resp = requests.get(target_url, timeout=5)
+            if resp.status_code != 200:
+                st.warning(f"Ollama is reachable but returned status {resp.status_code}. It might be initializing models.")
+        except Exception:
+            st.error(f"Cannot reach Ollama at {target_url}. Please ensure Ollama is running and OLLAMA_HOST is correct.")
+            
+        # 2. Lazy load RAG agent (embeddings)
         from app.main import _get_rag_agent
         _get_rag_agent()
+        
     st.success("Pipeline ready!")
     return True
 

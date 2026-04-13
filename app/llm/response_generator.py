@@ -1,9 +1,8 @@
 import requests
 import json
-# import os # If using docker to get env
+from app.utils.config import get_ollama_url
 
-OLLAMA_URL = "http://localhost:11434/api/generate" # For local run
-# OLLAMA_URL = os.environ.get("OLLAMA_HOST", "http://localhost:11434") + "/api/generate" # For docker
+OLLAMA_URL = get_ollama_url()
 
 def generate_response(prompt: str) -> str:
     try:

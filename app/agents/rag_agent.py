@@ -6,6 +6,7 @@ import functools
 from typing import Tuple
 from app.rag.embedding_model import EmbeddingModel
 from app.rag.vector_db import VectorDB
+from app.utils.config import get_ollama_url
 
 logger = logging.getLogger(__name__)
 
@@ -15,8 +16,7 @@ class RAGAgent:
     def __init__(self, 
                  malicious_path: str = None, 
                  safe_path: str = None, 
-                 ollama_url: str = "http://localhost:11434", # For local run
-                 # ollama_url = os.environ.get("OLLAMA_HOST", "http://localhost:11434") + "/api/generate" # For docker
+                 ollama_url: str = None,
                  top_k: int = 2,
                  min_score: float = 0.4,
                  fallback_mal_threshold: float = 0.7,
@@ -30,7 +30,7 @@ class RAGAgent:
         self.fallback_saf_threshold = fallback_saf_threshold
         self.ollama_timeout = ollama_timeout
         self.max_prompt_length = max_prompt_length
-        self.ollama_url = ollama_url
+        self.ollama_url = ollama_url if ollama_url else get_ollama_url()
         
         base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         if malicious_path is None:

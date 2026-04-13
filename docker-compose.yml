@@ -9,8 +9,8 @@ services:
     volumes:
       - .:/app
     environment:
-      - OLLAMA_HOST=http://host.docker.internal:11434 # For local run
-      # - OLLAMA_HOST=http://[IP_ADDRESS]:11434 # For docker
+      - OLLAMA_HOST=http://host.docker.internal:11434
+      # - OLLAMA_HOST=http://[IP_ADDRESS]:11434 # To be used if the above fails
     extra_hosts:
       - "host.docker.internal:host-gateway"
     profiles: ["cpu"]
@@ -23,11 +23,16 @@ services:
     volumes:
       - .:/app
     environment:
-      - OLLAMA_HOST=http://host.docker.internal:11434 # For local run
-      # - OLLAMA_HOST=http://[IP_ADDRESS]:11434 # For docker
+      - OLLAMA_HOST=http://host.docker.internal:11434
+      # - OLLAMA_HOST=http://[IP_ADDRESS]:11434 # To be used if the above fails
       - NVIDIA_VISIBLE_DEVICES=all
     extra_hosts:
       - "host.docker.internal:host-gateway"
-    deploy: {}
-    gpus: all
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
     profiles: ["gpu"]
