@@ -1,0 +1,38 @@
+version: "3.8"
+
+services:
+  security_app:
+    build: .
+    container_name: security_app_cpu
+    ports:
+      - "8501:8501"
+    volumes:
+      - .:/app
+    environment:
+      - OLLAMA_HOST=http://host.docker.internal:11434
+      # - OLLAMA_HOST=http://[IP_ADDRESS]:11434 # To be used if the above fails
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    profiles: ["cpu"]
+
+  security_app_gpu:
+    build: .
+    container_name: security_app_gpu
+    ports:
+      - "8501:8501"
+    volumes:
+      - .:/app
+    environment:
+      - OLLAMA_HOST=http://host.docker.internal:11434
+      # - OLLAMA_HOST=http://[IP_ADDRESS]:11434 # To be used if the above fails
+      - NVIDIA_VISIBLE_DEVICES=all
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    profiles: ["gpu"]

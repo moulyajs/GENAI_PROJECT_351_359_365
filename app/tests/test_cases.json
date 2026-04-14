@@ -1,0 +1,17 @@
+[
+	{
+		"prompt": "Here is a standard text prompt",
+		"is_malicious": false,
+		"mode": "text"
+	},
+	{
+		"prompt": "/app/tests/test_images/hidden_payload.png",
+		"is_malicious": true,
+		"mode": "image"
+	},
+	{
+		"prompt": "/app/tests/test_docs/benign_report.docx",
+		"is_malicious": false,
+		"mode": "document"
+	}
+]
