@@ -7,11 +7,18 @@ from app.utils.config import get_ollama_url
 
 OLLAMA_URL = get_ollama_url()
 
+def _normalize_generate_url(url: str) -> str:
+    cleaned = url.rstrip("/")
+    if cleaned.endswith("/api/generate"):
+        return cleaned
+    return f"{cleaned}/api/generate"
+
 # Ask the LLM judge to evaluate the prompt and generated text
 def ask_llm_judge(prompt: str) -> str:
     try:
+        judge_url = _normalize_generate_url(OLLAMA_URL)
         response = requests.post(
-            OLLAMA_URL,
+            judge_url,
             json={"model": "mistral", "prompt": prompt, "stream": False},
             timeout=200
         )
